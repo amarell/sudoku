@@ -21,7 +21,7 @@ fn main() {
         vec![0, 0, 0, 0, 0, 0, 8, 0, 0],
     ];
 
-    if let Ok(solution) = solve_naive(&input) {
+    if let Ok(solution) = solve(&input) {
         printing(&solution)
     } else {
         println!("No solution.")
@@ -30,34 +30,34 @@ fn main() {
 
 /// Returns solved sudoku grid if the solution exists
 /// If solution doesn't exist, returns an error.
-fn solve_naive(input: &Vec<Vec<i32>>) -> Result<Vec<Vec<i32>>> {
+fn solve(input: &Vec<Vec<i32>>) -> Result<Vec<Vec<i32>>> {
     let mut grid = input.clone();
 
-    if solve_sudoku_naive(&mut grid, 0, 0) {
+    if solve_sudoku(&mut grid, 0, 0) {
         Ok(grid)
     } else {
         Err(())
     }
 }
 
-fn solve_sudoku_naive(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
+fn solve_sudoku(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
     if (r == 8) && (c == 9) {
         return true;
     }
 
     if c == 9 {
-        return solve_sudoku_naive(g, r + 1, 0);
+        return solve_sudoku(g, r + 1, 0);
     }
 
     if g[r][c] != 0 {
-        return solve_sudoku_naive(g, r, c + 1);
+        return solve_sudoku(g, r, c + 1);
     }
 
     // The spot is not filled, attempt all possiblities
     for i in 1..=9 {
         if is_safe(g, r, c, i) {
             g[r][c] = i;
-            if solve_sudoku_naive(g, r, c + 1) {
+            if solve_sudoku(g, r, c + 1) {
                 return true;
             }
 
@@ -68,10 +68,6 @@ fn solve_sudoku_naive(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
 
     // Assumption was wrong somewhere along the way or there is no solution
     false
-}
-
-fn solve(input: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    vec![vec![]]
 }
 
 fn is_safe(g: &Vec<Vec<i32>>, r: usize, c: usize, num: i32) -> bool {
@@ -112,7 +108,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_naive() {
+    fn test_basic() {
         let input = vec![
             vec![3, 0, 6, 5, 0, 8, 4, 0, 0],
             vec![5, 2, 0, 0, 0, 0, 0, 0, 0],
@@ -137,7 +133,7 @@ mod tests {
             vec![7, 4, 5, 2, 8, 6, 3, 1, 9],
         ];
 
-        assert_eq!(expected, solve_naive(&input).unwrap())
+        assert_eq!(expected, solve(&input).unwrap())
     }
 
     #[test]
@@ -166,7 +162,7 @@ mod tests {
             vec![4, 7, 3, 5, 2, 6, 8, 9, 1],
         ];
 
-        assert_eq!(expected, solve_naive(&input).unwrap())
+        assert_eq!(expected, solve(&input).unwrap())
     }
 
     #[test]
@@ -184,6 +180,6 @@ mod tests {
             vec![0, 0, 0, 0, 0, 0, 8, 0, 0],
         ];
 
-        assert_eq!(Err(()), solve_naive(&input))
+        assert_eq!(Err(()), solve(&input))
     }
 }
