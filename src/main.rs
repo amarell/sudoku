@@ -1,6 +1,14 @@
-use std::{collections::HashMap, result};
+use core::fmt;
+use std::{fmt::Display, result};
 
 type Result<T> = result::Result<T, ()>;
+
+fn printing(g: &Vec<Vec<i32>>) {
+    for r in g {
+        println!("{:?}", r);
+    }
+}
+
 fn main() {
     let input = vec![
         vec![3, 0, 6, 5, 0, 8, 4, 0, 0],
@@ -14,120 +22,97 @@ fn main() {
         vec![0, 0, 5, 2, 0, 6, 3, 0, 0],
     ];
 
-    solve_naive(input);
+    if let Ok(solution) = solve_naive(&input) {
+        printing(&solution)
+    } else {
+        println!("No solution.")
+    }
 }
 
-fn solve_naive(input: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    /// There is
-    ///  - 9 boxes
-    ///  - 9 rows
-    ///  - 9 cols
-    let freq_map = HashMap::from([
-        (1, 0),
-        (2, 0),
-        (3, 0),
-        (4, 0),
-        (5, 0),
-        (6, 0),
-        (7, 0),
-        (8, 0),
-        (9, 0),
-    ]);
+/// Returns solved sudoku grid if the solution exists
+/// If solution doesn't exist, returns an error.
+fn solve_naive(input: &Vec<Vec<i32>>) -> Result<Vec<Vec<i32>>> {
+    let mut grid = input.clone();
 
-    let mut row_maps = vec![freq_map.clone(); 9];
-    let mut col_maps = vec![freq_map.clone(); 9];
-    let mut box_maps = vec![freq_map.clone(); 9];
-
-    if let Ok(_) = init_state(input, &mut row_maps, &mut col_maps, &mut box_maps) {
-        println!("Initialized state...")
+    if f(&mut grid, 0, 0) {
+        Ok(grid)
     } else {
-        panic!("Something went wrong with state init...")
+        Err(())
     }
-
-    vec![vec![]]
 }
 
-fn init_state(
-    input: Vec<Vec<i32>>,
-    row_maps: &mut Vec<HashMap<i32, i32>>,
-    col_maps: &mut Vec<HashMap<i32, i32>>,
-    box_maps: &mut Vec<HashMap<i32, i32>>,
-) -> Result<()> {
-    if let Ok(_) = init_row_maps(&input, row_maps) {
-        println!("Initialized row maps.")
-    } else {
-        return Err(());
+fn f(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
+    if (r == 8) && (c == 9) {
+        return true;
     }
 
-    if let Ok(_) = init_col_maps(&input, col_maps) {
-        println!("Initialized col maps.")
-    } else {
-        return Err(());
+    if c == 9 {
+        return f(g, r + 1, 0);
     }
 
-    if let Ok(_) = init_box_maps(&input, box_maps) {
-        println!("Initialized box maps.")
-    } else {
-        return Err(());
+    if g[r][c] != 0 {
+        return f(g, r, c + 1);
     }
 
-    Ok(())
-}
-
-fn init_box_maps(input: &Vec<Vec<i32>>, box_maps: &mut Vec<HashMap<i32, i32>>) -> Result<()> {
-    // 1, 1 (1 // 3 , 1 // 3) -> (0, 0) -> (1, 1) -> 1st row of boxes, 1st column of boxes
-    // 1, 4 (1 // 3 , 4 // 3) -> (0, 1) -> (1, 2) -> 1st row of boxes, 2nd column of boxes
-    // 7, 7 (7 // 3 , 7 // 3) -> (2, 2) -> (3, 3) -> 3rd row of boxes, 3rd column of boxes
-
-    // [  0  ][  1  ][  2  ]
-    // [  3  ][  4  ][  5  ]
-    // [  6  ][  7  ][  8  ]
-
-    for (r, row) in input.iter().enumerate() {
-        for (c, el) in row.iter().enumerate() {
-            let box_index = (r / 3) * 3 + (c / 3);
-            if *el != 0 {
-                box_maps[box_index].insert(*el, 1);
+    // The spot is not filled, attempt all possiblities
+    for i in 1..=9 {
+        if is_safe(g, r, c, i) {
+            g[r][c] = i;
+            if f(g, r, c + 1) {
+                return true;
             }
+
+            // Guess was wrong, reset the grid to initial state
+            g[r][c] = 0
         }
     }
 
-    Ok(())
-}
-
-fn init_col_maps(input: &Vec<Vec<i32>>, col_maps: &mut Vec<HashMap<i32, i32>>) -> Result<()> {
-    for (_, row) in input.iter().enumerate() {
-        for (c, el) in row.iter().enumerate() {
-            if *el != 0 {
-                col_maps[c].insert(*el, 1);
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn init_row_maps(input: &Vec<Vec<i32>>, row_maps: &mut Vec<HashMap<i32, i32>>) -> Result<()> {
-    for (i, r) in input.iter().enumerate() {
-        for el in r {
-            if *el != 0 {
-                row_maps[i].insert(*el, 1);
-            }
-        }
-    }
-
-    Ok(())
+    // Assumption was wrong somewhere along the way or there is no solution
+    false
 }
 
 fn solve(input: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     vec![vec![]]
 }
 
+fn is_safe(g: &Vec<Vec<i32>>, r: usize, c: usize, num: i32) -> bool {
+    // Check row safety
+    for &el in &g[r] {
+        if el == num {
+            return false;
+        }
+    }
+
+    // Check column safety
+    for r in 0..9 {
+        if g[r][c] == num {
+            return false;
+        }
+    }
+
+    // Check box safety
+    let box_row = r / 3;
+    let box_col = c / 3;
+
+    let cols_to_check = box_col * 3..(box_col * 3 + 3);
+    let rows_to_check = box_row * 3..(box_row * 3 + 3);
+
+    for r in rows_to_check.clone() {
+        for c in cols_to_check.clone() {
+            if g[r][c] == num {
+                return false;
+            }
+        }
+    }
+
+    true
+}
+
 mod tests {
     use super::*;
 
     #[test]
-    fn test() {
+    fn test_naive() {
         let input = vec![
             vec![3, 0, 6, 5, 0, 8, 4, 0, 0],
             vec![5, 2, 0, 0, 0, 0, 0, 0, 0],
@@ -152,6 +137,6 @@ mod tests {
             vec![7, 4, 5, 2, 8, 6, 3, 1, 9],
         ];
 
-        assert_eq!(expected, solve(input))
+        assert_eq!(expected, solve_naive(&input).unwrap())
     }
 }
