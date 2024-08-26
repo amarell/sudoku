@@ -1,8 +1,9 @@
 use std::result;
 
 type Result<T> = result::Result<T, ()>;
+type Grid<T> = Vec<Vec<T>>;
 
-fn printing(g: &Vec<Vec<i32>>) {
+fn printing(g: &Grid<i32>) {
     for r in g {
         println!("{:?}", r);
     }
@@ -30,7 +31,7 @@ fn main() {
 
 /// Returns solved sudoku grid if the solution exists
 /// If solution doesn't exist, returns an error.
-fn solve(input: &Vec<Vec<i32>>) -> Result<Vec<Vec<i32>>> {
+fn solve(input: &Grid<i32>) -> Result<Grid<i32>> {
     let mut grid = input.clone();
 
     if solve_sudoku(&mut grid, 0, 0) {
@@ -40,7 +41,7 @@ fn solve(input: &Vec<Vec<i32>>) -> Result<Vec<Vec<i32>>> {
     }
 }
 
-fn solve_sudoku(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
+fn solve_sudoku(g: &mut Grid<i32>, r: usize, c: usize) -> bool {
     if (r == 8) && (c == 9) {
         return true;
     }
@@ -70,7 +71,7 @@ fn solve_sudoku(g: &mut Vec<Vec<i32>>, r: usize, c: usize) -> bool {
     false
 }
 
-fn is_safe(g: &Vec<Vec<i32>>, r: usize, c: usize, num: i32) -> bool {
+fn is_safe(g: &Grid<i32>, r: usize, c: usize, num: i32) -> bool {
     // Check row safety
     for &el in &g[r] {
         if el == num {
@@ -137,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    fn test_naive_expert_difficulty() {
+    fn test_expert_difficulty() {
         let input = vec![
             vec![0, 0, 0, 0, 0, 2, 0, 0, 0],
             vec![7, 3, 0, 0, 5, 0, 1, 0, 0],
